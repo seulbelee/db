@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>B안 - 통합 현황 (GIS 관제형)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #020617;
+  font-family: 'Pretendard', sans-serif;
+  color: #e5e7eb;
+}
+
+.map-area {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.map-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ================= 헤더 ================= */
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 24px;
+  background: linear-gradient(180deg, rgba(2,6,23,0.95) 0%, rgba(2,6,23,0.85) 90%, rgba(2,6,23,0) 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  z-index: 40;
+}
+
+.title-area h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.title-area p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 헤더 시스템 버튼 */
+.header-systems {
+  display: flex;
+  gap: 8px;
+}
+
+.header-sys-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;  
+  width: 44px;
+  height: 44px;
+  background: rgba(17,24,39,0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #94a3b8;
+}
+
+.header-sys-btn:hover {
+  background: rgba(30,41,59,0.8);
+  border-color: #334155;
+  color: #e5e7eb;
+}
+
+.header-sys-btn.active {
+  background: rgba(56,189,248,0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56,189,248,.15);
+}
+
+.info-area {
+  background: rgba(17,24,39,0.8);
+  backdrop-filter: blur(10px);
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.06);
+  display: flex;    
+  gap: 20px;
+  min-width: 260px;
+}
+
+.info-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.info-main i {
+  color: #fbbf24;
+  font-size: 24px;
+}
+
+.info-sub {
+  display: flex;
+  gap: 16px;
+  font-size: 20px;
+  color: #e5e7eb;
+}
+
+.info-sub span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-sub i {
+  color: #60a5fa;
+}
+
+/* ================= 시스템 아이콘 (세로형) ================= */
+.system-icons {
+  position: absolute;
+  top: 120px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 50;
+}
+
+.sys-btn {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(2,6,23,0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 60px;
+}
+
+.sys-btn i {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.sys-btn:hover {
+  background: rgba(15,23,42,0.95);
+  border-color: #334155;
+}
+
+.sys-btn.active {
+  border-color: #38bdf8;
+  background: rgba(56,189,248,0.1);
+  box-shadow: 0 0 0 2px rgba(56,189,248,.25);
+}
+
+/* ================= 시스템 패널 ================= */
+.system-panel {
+  position: absolute;
+  top: 120px;
+  left: 100px;
+  width: 360px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  background: rgba(2,6,23,0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 16px;
+  z-index: 50;
+  display: none;
+}
+
+.system-panel.active { display: block; }
+
+.panel-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #38bdf8;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.panel-item {
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(15,23,42,0.4);
+}
+
+.panel-item:hover {
+  background: rgba(15,23,42,0.8);
+  border-color: #334155;
+}
+
+.panel-item strong {
+  display: block;
+  margin-top: 4px;
+  color: #f1f5f9;
+}
+
+.alert { border-left: 4px solid #dc2626; }
+.warning { border-left: 4px solid #facc15; }
+.normal { border-left: 4px solid #22c55e; }
+
+/* ================= 마커 ================= */
+.marker {
+  position: absolute;
+  z-index: 30;
+  cursor: pointer;
+  transition: z-index 0s;
+}
+
+/* 활성화된 마커는 최상위로 */
+.marker.open {
+  z-index: 100;
+}
+
+.marker-pin {
+  position: absolute;
+  left: 50%;
+  top: 25px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  transform: translate(-50%, -100%);
+}
+
+.marker.danger .marker-pin {
+  background: #dc2626;
+  box-shadow: 0 0 0 6px rgba(220,38,38,.25), 0 0 25px rgba(220,38,38,.9);
+  animation: pulse 1.8s infinite;
+}
+
+.marker.warning .marker-pin {
+  background: #facc15;
+  box-shadow: 0 0 0 6px rgba(250,204,21,.25), 0 0 25px rgba(250,204,21,.9);
+}
+
+.marker.normal .marker-pin {
+  background: #22c55e;
+  box-shadow: 0 0 0 6px rgba(34,197,94,.25), 0 0 25px rgba(34,197,94,.9);
+}
+
+.marker-pin::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  background: #fff;
+  border-radius: 50%;
+}
+
+/* 기본 라벨 */
+.marker-label {
+  position: absolute;
+  left: 50%;
+  top: -44px;
+  transform: translateX(-50%);
+  background: rgba(2,6,23,0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 상세 레이어 */
+.marker-detail {
+  position: absolute;
+  left: 50%;
+  top: -120px;
+  transform: translateX(-50%);
+  background: rgba(2,6,23,0.98);
+  backdrop-filter: blur(10px);
+  border: 2px solid #334155;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 13px;
+  width: 240px;
+  display: none;
+  line-height: 1.6;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.marker.open .marker-detail { 
+  display: block;
+}
+
+.marker-detail strong {
+  display: block;
+  color: #38bdf8;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(220,38,38,.5); }
+  70% { box-shadow: 0 0 0 14px rgba(220,38,38,0); }
+  100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+}
+
+/* 스크롤바 커스터마이징 */
+.system-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.system-panel::-webkit-scrollbar-track {
+  background: #0f172a;
+  border-radius: 3px;
+}
+
+.system-panel::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+.system-panel::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+  .header-systems {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .info-area {
+    width: 100%;
+  }
+  
+  .info-sub {
+    font-size: 16px;
+  }
+  
+  .system-icons {
+    top: 180px;
+  }
+  
+  .system-panel {
+    top: 180px;
+    left: 160px;
+    width: calc(100vw - 180px);
+    max-width: 360px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="map-area">
+
+<img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FbIOr9i%2FbtrrLMIaQXu%2FAAAAAAAAAAAAAAAAAAAAAI3f5cuO9qFJBEUWd_NwwU7I-c6L3cDGevrimByCoNrb%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1769871599%26allow_ip%3D%26allow_referer%3D%26signature%3DwQzWdnOTKJIRRZSd54f6EpK6vAg%253D">
+
+<!-- 헤더 -->
+<div class="header">
+  <div class="title-area">
+    <h1>부안군 재난안전 통합 현황</h1>
+    <p>부안군 내 재난·안전 관련 시스템 통합 모니터링</p>
+  </div>
+
+  <div class="header-right">
+    <!-- 헤더 시스템 이동 버튼 -->
+    <div class="header-systems">
+      <div class="header-sys-btn" data-target="flood" title="도시침수">
+        <i class="fa-solid fa-water"></i>
+      </div>
+      <div class="header-sys-btn" data-target="stream" title="소하천">
+        <i class="fa-solid fa-wave-square"></i>
+      </div>
+      <div class="header-sys-btn" data-target="early" title="조기경보">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+    </div>
+
+    <div class="info-area">
+      <div class="info-main">
+        <i class="fa-solid fa-cloud-sun"></i>
+        부안군 맑음 4℃
+      </div>
+      <div class="info-sub">
+        <span><i class="fa-solid fa-calendar-days"></i>2026.01.19</span>
+        <span><i class="fa-solid fa-clock"></i>14:32</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 시스템 아이콘 (세로형) -->
+<div class="system-icons">
+  <div class="sys-btn active" data-target="flood">
+    <i class="fa-solid fa-water"></i> 도시침수
+  </div>
+  <div class="sys-btn" data-target="stream">
+    <i class="fa-solid fa-wave-square"></i> 소하천
+  </div>
+  <div class="sys-btn" data-target="early">
+    <i class="fa-solid fa-bell"></i> 조기경보
+  </div>
+</div>
+
+<!-- 도시침수 패널 -->
+<div class="system-panel active" id="flood">
+  <div class="panel-header"><i class="fa-solid fa-water"></i> 도시침수 재난 예·경보 (총 7개소)</div>
+  
+  <div class="panel-item alert">
+    변산면 / 수위계-03<br>
+    <strong>침수 위험 (수위: 2.8m)</strong>
+  </div>
+  
+  <div class="panel-item alert">
+    부안읍 / 수위계-01<br>
+    <strong>침수 위험 (수위: 3.1m)</strong>
+  </div>
+  
+  <div class="panel-item alert">
+    계화면 / 수위계-05<br>
+    <strong>침수 위험 (수위: 2.6m)</strong>
+  </div>
+  
+  <div class="panel-item warning">
+    진서면 / 수위계-04<br>
+    <strong>침수 주의 (수위: 1.8m)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    동진면 / 수위계-02<br>
+    <strong>정상 (수위: 0.9m)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    상서면 / 수위계-06<br>
+    <strong>정상 (수위: 1.1m)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    백산면 / 수위계-07<br>
+    <strong>정상 (수위: 0.7m)</strong>
+  </div>
+</div>
+
+<!-- 소하천 패널 -->
+<div class="system-panel" id="stream">
+  <div class="panel-header"><i class="fa-solid fa-wave-square"></i> 소하천 스마트 계측 (총 6개소)</div>
+  
+  <div class="panel-item normal">
+    부안읍 / 계측기-A1<br>
+    <strong>정상 (수위: 0.8m / 유속: 0.3m/s)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    변산면 / 계측기-A2<br>
+    <strong>정상 (수위: 1.2m / 유속: 0.4m/s)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    줄포면 / 계측기-A3<br>
+    <strong>정상 (수위: 0.6m / 유속: 0.2m/s)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    계화면 / 계측기-A4<br>
+    <strong>정상 (수위: 0.9m / 유속: 0.3m/s)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    보안면 / 계측기-A5<br>
+    <strong>정상 (수위: 1.0m / 유속: 0.5m/s)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    행안면 / 계측기-A6<br>
+    <strong>정상 (수위: 0.7m / 유속: 0.2m/s)</strong>
+  </div>
+</div>
+
+<!-- 조기경보 패널 -->
+<div class="system-panel" id="early">
+  <div class="panel-header"><i class="fa-solid fa-bell"></i> 조기경보 시스템 (총 8개소)</div>
+  
+  <div class="panel-item warning">
+    부안읍 / 경보장치-02<br>
+    <strong>주의 단계 (강우량: 45mm/h)</strong>
+  </div>
+  
+  <div class="panel-item warning">
+    변산면 / 경보장치-05<br>
+    <strong>주의 단계 (강우량: 38mm/h)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    진서면 / 경보장치-01<br>
+    <strong>정상 (강우량: 12mm/h)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    동진면 / 경보장치-03<br>
+    <strong>정상 (강우량: 8mm/h)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    상서면 / 경보장치-04<br>
+    <strong>정상 (강우량: 15mm/h)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    계화면 / 경보장치-06<br>
+    <strong>정상 (강우량: 10mm/h)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    보안면 / 경보장치-07<br>
+    <strong>정상 (강우량: 7mm/h)</strong>
+  </div>
+  
+  <div class="panel-item normal">
+    줄포면 / 경보장치-08<br>
+    <strong>정상 (강우량: 11mm/h)</strong>
+  </div>
+</div>
+
+<!-- 도시침수 마커 -->
+<div class="marker danger" style="top:48%; left:52%;">
+  <div class="marker-pin"></div>
+  <div class="marker-label">변산면 / 수위계-03</div>
+  <div class="marker-detail">
+    <strong>도시침수 재난 예·경보</strong>
+    지역: 변산면 △△교 인근<br>
+    상태: 침수 위험<br>
+    수위: 2.8m<br>
+    최종 측정: 14:30
+  </div>
+</div>
+
+<div class="marker danger" style="top:38%; left:48%;">
+  <div class="marker-pin"></div>
+  <div class="marker-label">부안읍 / 수위계-01</div>
+  <div class="marker-detail">
+    <strong>도시침수 재난 예·경보</strong>
+    지역: 부안읍 ○○천 하류<br>
+    상태: 침수 위험<br>
+    수위: 3.1m<br>
+    최종 측정: 14:28
+  </div>
+</div>
+
+<div class="marker danger" style="top:55%; left:42%;">
+  <div class="marker-pin"></div>
+  <div class="marker-label">계화면 / 수위계-05</div>
+  <div class="marker-detail">
+    <strong>도시침수 재난 예·경보</strong>
+    지역: 계화면 배수펌프장<br>
+    상태: 침수 위험<br>
+    수위: 2.6m<br>
+    최종 측정: 14:25
+  </div>
+</div>
+
+<!-- 소하천 마커 -->
+<div class="marker normal" style="top:42%; left:56%;">
+  <div class="marker-pin"></div>
+  <div class="marker-label">변산면 / 계측기-A2</div>
+  <div class="marker-detail">
+    <strong>소하천 스마트 계측</strong>
+    지역: 변산면 소하천 구간<br>
+    상태: 정상<br>
+    수위: 1.2m / 유속: 0.4m/s<br>
+    최종 측정: 14:32
+  </div>
+</div>
+
+<div class="marker normal" style="top:35%; left:44%;">
+  <div class="marker-pin"></div>
+  <div class="marker-label">부안읍 / 계측기-A1</div>
+  <div class="marker-detail">
+    <strong>소하천 스마트 계측</strong>
+    지역: 부안읍 소하천 구간<br>
+    상태: 정상<br>
+    수위: 0.8m / 유속: 0.3m/s<br>
+    최종 측정: 14:31
+  </div>
+</div>
+
+<!-- 조기경보 마커 -->
+<div class="marker warning" style="top:62%; left:46%;">
+  <div class="marker-pin"></div>
+  <div class="marker-label">부안읍 / 경보장치-02</div>
+  <div class="marker-detail">
+    <strong>조기경보 시스템</strong>
+    지역: 부안읍 중심가<br>
+    상태: 주의 단계<br>
+    강우량: 45mm/h<br>
+    최종 측정: 14:29
+  </div>
+</div>
+
+<div class="marker warning" style="top:50%; left:58%;">
+  <div class="marker-pin"></div>
+  <div class="marker-label">변산면 / 경보장치-05</div>
+  <div class="marker-detail">
+    <strong>조기경보 시스템</strong>
+    지역: 변산면 해안도로<br>
+    상태: 주의 단계<br>
+    강우량: 38mm/h<br>
+    최종 측정: 14:27
+  </div>
+</div>
+
+<div class="marker normal" style="top:32%; left:50%;">
+  <div class="marker-pin"></div>
+  <div class="marker-label">진서면 / 경보장치-01</div>
+  <div class="marker-detail">
+    <strong>조기경보 시스템</strong>
+    지역: 진서면 주거지역<br>
+    상태: 정상<br>
+    강우량: 12mm/h<br>
+    최종 측정: 14:30
+  </div>
+</div>
+
+</div>
+
+<script>
+$(document).ready(function() {
+  
+  // 마커 클릭 이벤트
+  $('.marker').on('click', function(e) {
+    e.stopPropagation();
+    
+    $('.marker').not(this).removeClass('open');
+    $(this).toggleClass('open');
+  });
+
+  // 바디 클릭 시 모든 마커 닫기
+  $('body').on('click', function() {
+    $('.marker').removeClass('open');
+  });
+
+  // 좌측 시스템 버튼 클릭
+  $('.sys-btn').on('click', function() {
+    $('.sys-btn, .system-panel, .header-sys-btn').removeClass('active');
+    
+    $(this).addClass('active');
+    $('#' + $(this).data('target')).addClass('active');
+  });
+
+  // 패널 아이템 클릭 시 해당 마커로 포커스
+  $('.panel-item').on('click', function(e) {
+    e.stopPropagation();
+    const text = $(this).text();
+    
+    $('.marker').removeClass('open');
+    
+    $('.marker').each(function() {
+      const label = $(this).find('.marker-label').text().trim();
+      if (text.includes(label)) {
+        $(this).addClass('open');
+        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+  
+});
+</script>
+</body>
+</html>
